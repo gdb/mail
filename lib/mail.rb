@@ -60,23 +60,28 @@ module Mail # :doc:
 
   require 'mail/envelope'
 
-  parsers = %w[ rfc2822_obsolete rfc2822 address_lists phrase_lists
-                date_time received message_ids envelope_from rfc2045
-                mime_version content_type content_disposition
-                content_transfer_encoding content_location ]
+  def self.load_parsers
+    parsers = %w[ rfc2822_obsolete rfc2822 address_lists phrase_lists
+                  date_time received message_ids envelope_from rfc2045
+                  mime_version content_type content_disposition
+                  content_transfer_encoding content_location ]
 
-  parsers.each do |parser|
-    begin
-      # Try requiring the pre-compiled ruby version first
-      require 'treetop/runtime'
-      require "mail/parsers/#{parser}"
-    rescue LoadError
-      # Otherwise, get treetop to compile and load it
-      require 'treetop/runtime'
-      require 'treetop/compiler'
-      Treetop.load(File.join(File.dirname(__FILE__)) + "/mail/parsers/#{parser}")
+    parsers.each do |parser|
+      begin
+        # Try requiring the pre-compiled ruby version first
+        require 'treetop/runtime'
+        require "mail/parsers/#{parser}"
+      rescue LoadError
+        # Otherwise, get treetop to compile and load it
+        require 'treetop/runtime'
+        require 'treetop/compiler'
+        Treetop.load(File.join(File.dirname(__FILE__)) + "/mail/parsers/#{parser}")
+      end
     end
   end
+
+  # Loading the parsers is pretty expensive, so let's not do it
+  load_parsers unless (load_parsers = ENV['RUBY_MAIL_DONT_LOAD_PARSERS']) && (load_parsers != 'false')
 
   # Autoload header field elements and transfer encodings.
   require 'mail/elements'
